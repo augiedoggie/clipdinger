@@ -254,13 +254,16 @@ DeskbarReplicant::_BuildQuickMenu(BPopUpMenu* menu, bool favorites)
 		BMessage* clipMessage = new BMessage(QUICK_SELECT_CLIP);
 		clipMessage->AddString("clip", clip);
 
-		//TODO use the clip title for the menu if available
+		BString title;
+		if (msg.FindString("title", index, &title) != B_OK || title.IsEmpty())
+			title = clip;
+
 		//TODO make the string length(menu width) configurable?
-		if (clip.Length() > 50) {
-			clip.Truncate(47);
-			clip << " " B_UTF8_ELLIPSIS;
+		if (title.Length() > 50) {
+			title.Truncate(47);
+			title << " " B_UTF8_ELLIPSIS;
 		}
-		quickMenu->AddItem(new BMenuItem(clip, clipMessage));
+		quickMenu->AddItem(new BMenuItem(title, clipMessage));
 	}
 
 	if (quickMenu->CountItems() > 0) {
