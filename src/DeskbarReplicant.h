@@ -12,6 +12,7 @@
 #include <Entry.h>
 #include <View.h>
 
+class BPopUpMenu;
 
 class DeskbarReplicant : public BView {
 	public:
@@ -31,6 +32,7 @@ class DeskbarReplicant : public BView {
 
 	private:
 		void			_Init();
+		status_t		_BuildQuickMenu(BPopUpMenu* menu, bool favorites);
 
 		BBitmap*		fIcon;
 };

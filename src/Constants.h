@@ -71,6 +71,7 @@ static const int32 kMinuteUnits = 10; // minutes per unit
 #define UPDATE_SETTINGS		'uset'
 
 #define OPEN_CLIPDINGER		'opcd'
+#define QUICK_SELECT_CLIP	'quik'
 
 #define FAV_DRAGGED			'drfv'
 

@@ -19,9 +19,11 @@
 #include <Bitmap.h>
 #include <Catalog.h>
 #include <Deskbar.h>
+#include <FindDirectory.h>
 #include <IconUtils.h>
 #include <MenuItem.h>
 #include <Message.h>
+#include <Path.h>
 #include <PopUpMenu.h>
 #include <Resources.h>
 #include <Roster.h>
@@ -167,6 +169,7 @@ DeskbarReplicant::MessageReceived(BMessage* msg)
 			if (messenger.IsValid())
 				messenger.SendMessage(msg);
 		}
+			break;
 		case OPEN_CLIPDINGER:
 		{
 			team_id team;
@@ -183,10 +186,91 @@ DeskbarReplicant::MessageReceived(BMessage* msg)
 				messenger.SendMessage(&message);
 			}
 		}
+			break;
+		case QUICK_SELECT_CLIP:
+		{
+			BString clip;
+			if (msg->FindString("clip", &clip) != B_OK)
+				break;
+
+			if (!be_clipboard->Lock())
+				break;
+			be_clipboard->Clear();
+			BMessage* clipMessage = NULL;
+			if ((clipMessage = be_clipboard->Data()) != NULL) {
+				clipMessage->AddData("text/plain", B_MIME_TYPE, clip, clip.Length());
+				be_clipboard->Commit();
+			}
+			be_clipboard->Unlock();
+		}
+			break;
 		default:
 			BView::MessageReceived(msg);
 			break;
 	}
+}
+
+
+status_t
+DeskbarReplicant::_BuildQuickMenu(BPopUpMenu* menu, bool favorites)
+{
+	BPath path;
+	BMessage msg;
+	BMenu* quickMenu;
+
+	if (favorites)
+		quickMenu = new BMenu("Select Favorite");
+	else
+		quickMenu = new BMenu("Select Clip");
+
+	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) != B_OK)
+		return B_ERROR;
+
+	status_t ret = path.Append(kSettingsFolder);
+	if (ret != B_OK)
+		return ret;
+
+	if (favorites)
+		path.Append(kFavoritesFile);
+	else
+		path.Append(kHistoryFile);
+
+	BFile file(path.Path(), B_READ_ONLY);
+
+	if (file.InitCheck() != B_OK || msg.Unflatten(&file) != B_OK)
+		return B_ERROR;
+
+	int32 count = 0;
+	type_code type;
+	if (msg.GetInfo("clip", &type, &count) != B_OK || type != B_STRING_TYPE)
+		return B_ERROR;
+
+	//TODO make limit configurable?
+	for (int32 index = count - 1; count - index <= 20 && index >= 0; index--) {
+		BString clip;
+		if (msg.FindString("clip", index, &clip) != B_OK)
+			return B_ERROR;
+
+		BMessage* clipMessage = new BMessage(QUICK_SELECT_CLIP);
+		clipMessage->AddString("clip", clip);
+
+		//TODO use the clip title for the menu if available
+		//TODO make the string length(menu width) configurable?
+		if (clip.Length() > 50) {
+			clip.Truncate(47);
+			clip << " " B_UTF8_ELLIPSIS;
+		}
+		quickMenu->AddItem(new BMenuItem(clip, clipMessage));
+	}
+
+	if (quickMenu->CountItems() > 0) {
+		quickMenu->SetTargetForItems(this);
+		menu->AddItem(quickMenu);
+		return B_OK;
+	}
+
+	// not really an error, just empty
+	return B_ERROR;
 }
 
 
@@ -201,6 +285,15 @@ DeskbarReplicant::MouseDown(BPoint where)
 
 		BPopUpMenu* menu = new BPopUpMenu("", false, false);
 		menu->SetFont(be_plain_font);
+
+		bool needSeparator = false;
+		if (_BuildQuickMenu(menu, false) == B_OK)
+			needSeparator = true;
+		if (_BuildQuickMenu(menu, true) == B_OK)
+			needSeparator = true;
+
+		if (needSeparator)
+			menu->AddSeparatorItem();
 
 		menu->AddItem(new BMenuItem(B_TRANSLATE("Open Clipdinger"), new BMessage(OPEN_CLIPDINGER)));
 		menu->AddItem(
