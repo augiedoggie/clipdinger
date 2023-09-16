@@ -28,7 +28,7 @@ APP_MIME_SIG = application/x-vnd.humdinger-clipdinger
 #	means this Makefile will not work correctly if two source files with the
 #	same name (source.c or source.cpp) are included from different directories.
 #	Also note that spaces in folder names do not work well with this Makefile.
-SRCS = App.cpp \
+SRCS = App.cpp AppScripting.cpp\
 	ClipItem.cpp ClipView.cpp ContextPopUp.cpp \
 	DeskbarReplicant.cpp \
 	EditWindow.cpp \

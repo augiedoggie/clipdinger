@@ -106,6 +106,10 @@ App::MessageReceived(BMessage* msg)
 			}
 			break;
 		}
+		case B_COUNT_PROPERTIES:
+		case B_GET_PROPERTY:
+			_HandleScriptCommand(msg);
+			break;
 		default:
 		{
 			BApplication::MessageReceived(msg);

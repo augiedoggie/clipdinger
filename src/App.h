@@ -29,12 +29,19 @@ public:
 	virtual bool		QuitRequested();
 	void				AboutRequested();
 	void				MessageReceived(BMessage* msg);
+	status_t			GetSupportedSuites(BMessage* msg);
+	BHandler*			ResolveSpecifier(BMessage* msg, int32 index, BMessage* specifier,
+											int32 what, const char* property);
 
 	Settings*			GetSettings() { return &fSettings; }
 
 	MainWindow*			fMainWindow;
 
 private:
+	void				_HandleScriptCommand(BMessage* msg);
+	void				_CountClips(BMessage* msg);
+	void				_GetClipInformation(BMessage* msg);
+
 	Settings			fSettings;
 	ReplWindow*			fReplWindow;
 	SettingsWindow*		fSettingsWindow;
